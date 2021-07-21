@@ -6,10 +6,7 @@ var router = express.Router();
 
 router.post("/signup", signupValidDataChecker, errorCatcher, userSignupLocal); // working 
 router.post("/signin", authenticateLocal, getToken, userSignin);
-router.post("/authenticatetoken",(req, res, next) =>{
-    console.log(req.headers)
-    next();
-}, authenticateJWT, authenticatedUser);
+router.post("/authenticatetoken", authenticateJWT, authenticatedUser);
 
 
 router.get("/google", authenticateGooglePage);

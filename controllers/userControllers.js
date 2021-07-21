@@ -17,7 +17,6 @@ exports.userSignupLocal = expressAsyncHandler(async (req, res, next) => {
         agreement:req.body.agreement
     }), req.body.password, async (err, user) => {
         if (err) {
-            console.log(err.message)
             res.statusCode = 500;
             res.setHeader('Content-Type', 'applcation/json');
             res.json({ success: false, message : err.message })
@@ -66,7 +65,6 @@ exports.googleUserSignin = expressAsyncHandler(async (req, res ) => {
             })
         }
     }).catch(err => {
-        console.log(err)
         res.statusCode = 500;
         res.setHeader('Content-Type', 'applcation/json');
         return res.json({ success: false, err })
