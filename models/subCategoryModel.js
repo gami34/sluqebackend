@@ -18,7 +18,11 @@ var subCategorySchema = new mongoose.Schema(
       lowercase: true,
       index: true,
     },
-    parent: { type: ObjectId, ref: "Category", required: "Category is required" }
+    parent: {
+      type: ObjectId,
+      ref: "Category",
+      required: "Category is required",
+    },
   },
   {
     timestamps: true,
