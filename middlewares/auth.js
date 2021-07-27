@@ -61,6 +61,7 @@ exports.getTimedTokenFunc = (user) => {
 };
 
 exports.authenticateJWT = expressAsyncHandler(async (req, res, next) => {
+  console.log(req.headers);
   passport.authenticate("jwt", { session: false })(req, res, next);
 });
 

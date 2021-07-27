@@ -24,7 +24,7 @@ var router = express.Router();
 router.post("/signup", signupValidDataChecker, errorCatcher, userSignupLocal); // working
 router.post("/signin", authenticateLocal, getToken, userSignin);
 router.post("/authenticatetoken", authenticateJWT, authenticatedUser);
-router.post("/validateEmailAddress", authenticateJWT, validateUserEmail);
+router.post("/validateuseremail", authenticateJWT, validateUserEmail);
 
 router.get("/google", authenticateGooglePage);
 router.get("/googleredirect", authenticateGoogle, (req, res) => {
