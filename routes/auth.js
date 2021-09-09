@@ -6,6 +6,10 @@ const {
   googleUserSignin,
   authenticatedUser,
   validateUserEmail,
+  resendOTP,
+  userRegistrationRequest,
+  onForgetPasswordRequest,
+  onCompleteForgetPassword,
 } = require("../controllers/userControllers");
 const {
   authenticateLocal,
@@ -14,10 +18,13 @@ const {
   authenticateGoogle,
   isAuthenticatedGoogleFirebase,
   authenticateJWT,
+  resendAuthenticationToken,
 } = require("../middlewares/auth");
 const {
   signupValidDataChecker,
   errorCatcher,
+  validateEmailField,
+  validatePasswordFields,
 } = require("../middlewares/validInfoChecker");
 var router = express.Router();
 
@@ -25,6 +32,26 @@ router.post("/signup", signupValidDataChecker, errorCatcher, userSignupLocal); /
 router.post("/signin", authenticateLocal, getToken, userSignin);
 router.post("/authenticatetoken", authenticateJWT, authenticatedUser);
 router.post("/validateuseremail", authenticateJWT, validateUserEmail);
+router.post(
+  "/registrationrequest",
+  validateEmailField,
+  errorCatcher,
+  userRegistrationRequest
+);
+router.post("/resendotp", resendAuthenticationToken, resendOTP);
+router.post(
+  "/forgetpassword",
+  validateEmailField,
+  errorCatcher,
+  onForgetPasswordRequest
+);
+router.post(
+  "/completeforgetpassword",
+  authenticateJWT,
+  validatePasswordFields,
+  errorCatcher,
+  onCompleteForgetPassword
+);
 
 router.get("/google", authenticateGooglePage);
 router.get("/googleredirect", authenticateGoogle, (req, res) => {

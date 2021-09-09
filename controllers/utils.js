@@ -27,10 +27,7 @@ exports.sendEmailOTP = (emailAddress) => {
     try {
       // gen OTP
       var OTP = await this.genOTP();
-      console.log("OTP Value", OTP);
-      //save the OTP to database tied to theis user
 
-      // send a mail to client
       let message =
         "<b>Hi,\n kindly find your OTP for authentication </b>\n\nOTP Auth: " +
         OTP;
@@ -55,13 +52,22 @@ exports.emailSender = expressAsyncHandler(
       subject: subjectHeader,
       html: mesageText, //Email content in HTML
     };
-    return transporter
-      .sendMail(mailOptions)
-      .then((res) => {
-        return res;
-      })
-      .catch((err) => {
-        return err;
+
+    return new Promise((resolve, reject) => {
+      transporter.sendMail(mailOptions, (err, response) => {
+        if (err) {
+          return reject();
+        }
+        return resolve(response);
       });
+    });
+    // return transporter
+    //   .sendMail(mailOptions)
+    //   .then((res) => {
+    //     return res;
+    //   })
+    //   .catch((err) => {
+    //     return err;
+    //   });
   }
 );

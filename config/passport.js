@@ -1,4 +1,5 @@
 var { User } = require("../models/userModel");
+var { BackendUser } = require("../models/backendUserModel");
 var config = require("./config");
 var LocalStrategy = require("passport-local").Strategy;
 var JwtStrategy = require("passport-jwt").Strategy;
@@ -20,6 +21,7 @@ var googleOptions = {
 module.exports = function (passport) {
   // using passport local strategy
   passport.use(new LocalStrategy(User.authenticate()));
+  // passport.use("backend-local", new LocalStrategy(BackendUser.authenticate()));
   // using the jwt strategy
   passport.use(
     new JwtStrategy(jwtOptions, (jwt_payload, done) => {
@@ -68,6 +70,19 @@ module.exports = function (passport) {
       }
     )
   );
+
   passport.serializeUser(User.serializeUser());
+  // passport.serializeUser(function (user, done) {
+  //   done(null, user.id);
+  // });
+
   passport.deserializeUser(User.deserializeUser());
+  //   passport.deserializeUser(function (id, done) {
+  //     User.findById(id, function (err1, user1) {
+  //       if (user) return done(err1, user1);
+  //       BackendUser.findById(id, function (err2, user2) {
+  //         return done(err2, user2);
+  //       })
+  //     });
+  //   });
 };

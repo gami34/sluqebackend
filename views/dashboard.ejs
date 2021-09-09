@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!--Bootstrap CSS-->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <!--Font Awesome-->
+    <link rel="stylesheet" href="/css/fontawesome-all.min.css">
+    <link rel="stylesheet" href="/css/fontawesome.css">
+    <title>Document</title>
+</head>
+<body>
+    <!-- navigation for different routes -->
+    <%- include partials/sidetopbar %>
+
+    <!-- route specific contents -->
+    <%- include(path, {}) %>
+
+    <!-- Page JavaScript Files-->
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/jquery-1.12.4.min.js"></script>
+    <!--Popper JS-->
+    <script src="/js/popper.min.js"></script>
+    <!--Bootstrap-->
+    <script src="/js/bootstrap.min.js"></script>
+</html>

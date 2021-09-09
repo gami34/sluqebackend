@@ -11,10 +11,10 @@ exports.userSignupLocal = expressAsyncHandler(async (req, res, next) => {
   User.register(
     new User({
       username: req.body.email,
-      sex: req.body.displayName,
       email: req.body.email,
       role: req.body.role,
       agreement: req.body.agreement,
+      otp_created_at: new Date(),
     }),
     req.body.password,
     async (err, user) => {
@@ -61,10 +61,9 @@ exports.userSignupLocal = expressAsyncHandler(async (req, res, next) => {
     }
   );
 });
+
 exports.googleUserSignin = expressAsyncHandler(async (req, res) => {
   const {
-    user_id,
-    name,
     email,
     picture,
     firebase: { sign_in_provider },
@@ -113,7 +112,7 @@ exports.googleUserSignin = expressAsyncHandler(async (req, res) => {
     .catch((err) => {
       res.statusCode = 500;
       res.setHeader("Content-Type", "applcation/json");
-      return res.json({ success: false, err });
+      return res.json({ success: false, status: err.message });
     });
 });
 
@@ -135,13 +134,182 @@ exports.authenticatedUser = expressAsyncHandler(async (req, res) => {
   res.json({ success: true, status: "SignedIn Successful", user: req.user });
 });
 
+exports.userRegistrationRequest = expressAsyncHandler(async (req, res) => {
+  User.findOne({ email: req.body.email }, (err, user) => {
+    if (err || user == null) {
+      return res.json({
+        success: false,
+        message: " Internal server error",
+      });
+    }
+    let prospect = new User({
+      email: req.body.email,
+    });
+    prospect.save((err) => {
+      if (err) {
+        return res.json({
+          success: false,
+          message: "internal server error",
+        });
+      }
+
+      return res.json({
+        success: true,
+        message: "Kindly proceed to the next stage",
+      });
+    });
+  });
+});
+
+exports.onForgetPasswordRequest = expressAsyncHandler(async (req, res) => {
+  // check if this is a registered user
+  User.findOne({ email: req?.body?.email }, (err, user) => {
+    if (err) {
+      return res.json({
+        success: false,
+        message: "no user found for this account",
+      });
+    }
+
+    //udpate the otp value on the database
+    User.updateOne({ _id: user.id }, { $set: { lastOTP: OTP } }).exec((err) => {
+      if (err) {
+        return res.json({
+          success: false,
+          message: "Internal server error",
+        });
+      }
+
+      // end an otp mail to this emaill address
+      sendEmailOTP(user.email).then((OTP) => {
+        // generate an Token
+        let token = getTimedTokenFunc({ _id: user?._id }); // expires after 60 seconds
+
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "applcation/json");
+        return res.json({
+          success: true,
+          status: "request Successful",
+          token,
+        });
+      });
+    });
+  });
+});
+
+exports.onCompleteForgetPassword = expressAsyncHandler(async (req, res) => {
+  // Hack: remove the old customer information from the record and then create a new record using the passport algortithm
+  User.findOneAndRemove({ _id: req.user.id }, async (err) => {
+    if (err) {
+      return res.json({
+        success: false,
+        status: "internal server error",
+      });
+    }
+
+    await delete req.user.hash;
+    await delete req.user.salt;
+
+    User.register(
+      new User({
+        ...req.user,
+      }),
+      req.body.password, // this is the new password that will be get hashed by passport for us
+      (err, user) => {
+        if (err) {
+          return res.json({
+            success: false,
+            status: "internal server error",
+          });
+        }
+
+        return res.json({
+          success: true,
+          status: " password change was successful",
+        });
+
+        //send user a mail that the process has been completed
+        emailSender(
+          req.user.email,
+          "Success Password change",
+          "<b>Hello Dear,<br/>Kindly be informed that your password change process has been completed/b>"
+        );
+      }
+    );
+  });
+
+  // update the new password with the new password using passport
+  // send customer  a mail that the process has been completed
+});
+
+exports.resendOTP = expressAsyncHandler(async (req, res) => {
+  if (!req.user?.email_validated) {
+    // get the user info
+    let user = req.user;
+
+    // resend an OTP to the customer's email address
+    sendEmailOTP(user?.email).then((OTP) => {
+      // update the OTP value
+      User.updateOne(
+        { _id: user.id },
+        { $set: { lastOTP: OTP } },
+        async (err) => {
+          if (err) {
+            res.statusCode = 501;
+            return res.json({
+              success: false,
+              status: "OTP request not Successful",
+            });
+          }
+
+          // updated user values should be returned instead
+          User.findOne({ _id: user._id }, async (err, updateduserValue) => {
+            if (err) {
+              res.json({
+                success: false,
+                message: "internal server error",
+              });
+            }
+
+            // else send 200 response
+            // remove the hash and salt value
+            await delete user.hash;
+            await delete user.salt;
+
+            let token = await getTimedTokenFunc({ _id: user?._id });
+
+            res.statusCode = 200;
+            res.setHeader("Content-Type", "applcation/json");
+            return res.json({
+              success: true,
+              status: "Registration Successful",
+              user: updateduserValue,
+              token: "Bearer " + token,
+            });
+          });
+        }
+      );
+    });
+  } else {
+    res.statusCode = 403;
+    res.setHeader("Content-Type", "applcation/json");
+    res.json({
+      success: false,
+      status: "invalid OTP request",
+    });
+  }
+
+  // regenerate an Token to the customer
+});
+
 // this code base flow need to be improved upon
 exports.validateUserEmail = expressAsyncHandler(async (req, res) => {
   // find this usr by ID based on the authebticated user by token
+
   User.findOne({ _id: req.user.id })
     .then((user) => {
-      // if the opt received matches the otp expected:
-      if (req.body.otp == user.lastOTP) {
+      // if the otp received matches the otp expected:
+      if (req.body.otp == user.lastOTP && !user?.email_validated) {
         // update the value of the email as validated
         User.updateOne(
           { _id: req.user.id },
@@ -154,7 +322,7 @@ exports.validateUserEmail = expressAsyncHandler(async (req, res) => {
             }
 
             // get the updated user and send to the front end
-            User.findOne({ _id: req.user.id }, (err, validatedUser) => {
+            User.findOne({ _id: req.user.id }, async (err, validatedUser) => {
               if (err) {
                 res.statusCode = 500;
                 res.setHeader("Content-Type", "applcation/json");
@@ -164,10 +332,10 @@ exports.validateUserEmail = expressAsyncHandler(async (req, res) => {
               //genetate a valid token
               let token = getTokenFunc({ _id: validatedUser.id });
               // send customer a welcome mail
-              emailSender(
+              await emailSender(
                 validatedUser.email,
                 "Welcome to Sluqe's Fashion App, Brandcery",
-                "Hello Dear,\nWelcome to the Sluqe's Fashion Application"
+                "<b>Hello Dear,<br/>Welcome to the Sluqe's Fashion Application</b>"
               );
 
               //send customer the valid Token

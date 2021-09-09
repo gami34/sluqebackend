@@ -21,7 +21,6 @@ module.exports = {
     AUTH_PROVIDER_X509_CERT_URL: process.env.AUTH_PROVIDER_X509_CERT_URL,
     CLIENT_X509_CERT_URL: process.env.CLIENT_X509_CERT_URL,
   },
-
   GOOGLE_API: {
     CLIENT_ID: process.env.CLIENT_ID_GOOGLE_API,
     CLIENT_SECRET: process.env.CLIENT_SECRET,
@@ -32,4 +31,14 @@ module.exports = {
     HOST: process.env.NODEMAILER_HOST,
     PORT: process.env.NODEMAILER_PORT,
   },
+  SETUP: {
+    superUserEmail: process.env.SUPER_USER_EMAIL,
+    sex: process.env.superAdminDefaultsex,
+    firstName: process.env.superAdminDefaultFirstName,
+    lastName: process.env.superAdminDefaultLastName,
+    department: process.env.superAdminDefaultDepartment,
+    email: process.env.superAdminDefaultEmail,
+    agreement: process.env.superAdminDefaultAgreement,
+    password: process.env.superAdminDefaultPassword,
+  }
 };
